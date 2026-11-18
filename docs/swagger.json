@@ -1,0 +1,902 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Delcom Blog REST API",
+    "description": "Dokumentasi RESTful API Backend Delcom Blog (Golang Gin) dengan Feature-First, TDD, dan AI Blog Generator terintegrasi Search Engine.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Delcom - Labs"
+    }
+  },
+  "host": "",
+  "basePath": "/",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Format token: Bearer <token_jwt>"
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register Pengguna Baru",
+        "description": "Mendaftarkan pengguna baru (role default: member).",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Registrasi berhasil",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "400": {
+            "description": "Permintaan tidak valid / validasi gagal"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login Pengguna",
+        "description": "Autentikasi akun pengguna menggunakan username dan password.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login berhasil",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "401": {
+            "description": "Username atau password salah"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout Pengguna",
+        "description": "Menghapus sesi login klien.",
+        "responses": {
+          "200": {
+            "description": "Logout berhasil"
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Ambil Profil Pengguna",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil berhasil dimuat",
+            "schema": {
+              "$ref": "#/definitions/UserProfileResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update Profil Pengguna",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateProfileRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil berhasil diperbarui"
+          },
+          "400": {
+            "description": "Validasi gagal"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/public/categories": {
+      "get": {
+        "tags": [
+          "Publik"
+        ],
+        "summary": "Daftar Kategori",
+        "description": "Teknologi, Pendidikan, Gaya Hidup, Bisnis, Opini, Umum.",
+        "responses": {
+          "200": {
+            "description": "Daftar kategori berhasil dimuat"
+          }
+        }
+      }
+    },
+    "/api/public/posts": {
+      "get": {
+        "tags": [
+          "Publik"
+        ],
+        "summary": "Daftar Artikel Terbit",
+        "description": "Artikel dengan is_published = true, mendukung ?q= dan ?category=.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "type": "string",
+            "description": "Kata kunci pencarian (judul/excerpt)"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "type": "string",
+            "description": "Filter kategori"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar artikel terbit berhasil dimuat",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/posts/{slug}": {
+      "get": {
+        "tags": [
+          "Publik"
+        ],
+        "summary": "Detail Artikel Publik",
+        "description": "Termasuk data penulis dan reading time.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail artikel berhasil dimuat",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "404": {
+            "description": "Artikel tidak ditemukan"
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Daftar Artikel Saya",
+        "description": "Seluruh artikel milik penulis (terbit maupun draf).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "type": "string",
+            "description": "Kata kunci pencarian (judul/excerpt)"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "type": "string",
+            "description": "Filter kategori"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar artikel berhasil dimuat",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Buat Artikel",
+        "description": "Slug unik dan reading time dibuat otomatis.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePostRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Artikel berhasil dibuat",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "400": {
+            "description": "Data tidak valid"
+          }
+        }
+      }
+    },
+    "/api/posts/stats": {
+      "get": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Statistik Penulis",
+        "description": "Ringkasan 3 kartu: Total Artikel, Total Terbit, Belum Selesai (draf).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistik berhasil dimuat",
+            "schema": {
+              "$ref": "#/definitions/PostStatsResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/posts/ai-generate": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "AI Blog Generator",
+        "description": "Menghasilkan draf artikel utuh dengan integrasi Search Engine dan OpenAI Chat Completions.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GenerateBlogRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draf artikel berhasil dibuat",
+            "schema": {
+              "$ref": "#/definitions/GeneratedPost"
+            }
+          },
+          "400": {
+            "description": "Data tidak valid"
+          },
+          "500": {
+            "description": "Gagal menghubungi OpenAI"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}": {
+      "get": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Detail Artikel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail artikel berhasil dimuat",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "403": {
+            "description": "Bukan pemilik artikel"
+          },
+          "404": {
+            "description": "Artikel tidak ditemukan"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Perbarui Artikel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePostRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Artikel berhasil diperbarui",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "400": {
+            "description": "Data tidak valid"
+          },
+          "403": {
+            "description": "Bukan pemilik artikel"
+          },
+          "404": {
+            "description": "Artikel tidak ditemukan"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Hapus Artikel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Artikel berhasil dihapus"
+          },
+          "403": {
+            "description": "Bukan pemilik artikel"
+          },
+          "404": {
+            "description": "Artikel tidak ditemukan"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/toggle-publish": {
+      "patch": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Toggle Terbit/Draf",
+        "description": "Mengubah status Draf <-> Terbit beserta published_at.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status publikasi berhasil diubah",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "403": {
+            "description": "Bukan pemilik artikel"
+          },
+          "404": {
+            "description": "Artikel tidak ditemukan"
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Daftar Pengguna",
+        "description": "Seluruh pengguna beserta total artikel.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pengguna berhasil dimuat",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UserWithStats"
+              }
+            }
+          },
+          "403": {
+            "description": "Hanya admin"
+          }
+        }
+      }
+    },
+    "/api/admin/posts": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Arsip Seluruh Artikel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar artikel berhasil dimuat",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          },
+          "403": {
+            "description": "Hanya admin"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/posts": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Artikel Pengguna",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar artikel berhasil dimuat",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          },
+          "404": {
+            "description": "Pengguna tidak ditemukan"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "RegisterRequest": {
+      "type": "object",
+      "required": [
+        "username",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "budi_santoso"
+        },
+        "email": {
+          "type": "string",
+          "example": "budi@example.com"
+        },
+        "password": {
+          "type": "string",
+          "example": "Password123!"
+        },
+        "role": {
+          "type": "string",
+          "example": "member"
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "budi_santoso"
+        },
+        "password": {
+          "type": "string",
+          "example": "Password123!"
+        }
+      }
+    },
+    "UpdateProfileRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "example": "budi.baru@example.com"
+        },
+        "password": {
+          "type": "string",
+          "example": "NewPassword123!"
+        }
+      }
+    },
+    "UserProfileResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "budi_santoso"
+        },
+        "email": {
+          "type": "string",
+          "example": "budi@example.com"
+        },
+        "role": {
+          "type": "string",
+          "example": "member"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "user": {
+          "$ref": "#/definitions/UserProfileResponse"
+        }
+      }
+    },
+    "Post": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "user_id": {
+          "type": "integer",
+          "example": 2
+        },
+        "title": {
+          "type": "string",
+          "example": "Mengenal Clean Architecture di Golang"
+        },
+        "slug": {
+          "type": "string",
+          "example": "mengenal-clean-architecture-di-golang"
+        },
+        "category": {
+          "type": "string",
+          "example": "Teknologi"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "example": "## Judul\n\nIsi artikel Markdown"
+        },
+        "cover_image_path": {
+          "type": "string"
+        },
+        "is_published": {
+          "type": "boolean",
+          "example": true
+        },
+        "published_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reading_time": {
+          "type": "integer",
+          "example": 3
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "$ref": "#/definitions/UserProfileResponse"
+        }
+      }
+    },
+    "CreatePostRequest": {
+      "type": "object",
+      "required": [
+        "title",
+        "content"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Judul artikel"
+        },
+        "category": {
+          "type": "string",
+          "example": "Teknologi"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "example": "Isi artikel dalam Markdown"
+        },
+        "cover_image_path": {
+          "type": "string"
+        },
+        "is_published": {
+          "type": "boolean",
+          "example": false
+        }
+      }
+    },
+    "UpdatePostRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "cover_image_path": {
+          "type": "string",
+          "example": "DELETE untuk menghapus gambar sampul"
+        }
+      }
+    },
+    "PostStatsResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "example": 7
+        },
+        "total_terbit": {
+          "type": "integer",
+          "example": 5
+        },
+        "belum_selesai": {
+          "type": "integer",
+          "example": 2
+        }
+      }
+    },
+    "UserWithStats": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "total_posts": {
+          "type": "integer"
+        },
+        "total_published": {
+          "type": "integer"
+        }
+      }
+    },
+    "GenerateBlogRequest": {
+      "type": "object",
+      "required": [
+        "topic"
+      ],
+      "properties": {
+        "topic": {
+          "type": "string",
+          "example": "Manfaat belajar Golang"
+        },
+        "category": {
+          "type": "string",
+          "example": "Teknologi"
+        },
+        "include_web_search": {
+          "type": "boolean",
+          "example": true
+        }
+      }
+    },
+    "GeneratedPost": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
