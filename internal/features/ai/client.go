@@ -53,7 +53,7 @@ func NewOpenAiClient(endpoint, key, model string) *OpenAiClient {
 		Key:      key,
 		Model:    model,
 		HttpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 	}
 }
@@ -83,7 +83,7 @@ func (c *OpenAiClient) ChatCompletion(topic, category string, searchSnippets []s
 	systemInstruction := fmt.Sprintf(`Kamu adalah penulis blog profesional berbahasa Indonesia.
 Tulis SATU artikel blog lengkap dalam format JSON murni TANPA markdown block, TANPA kata pembuka/penutup.
 Format JSON wajib:
-{"title": "Judul artikel", "category": "salah satu dari: %s", "excerpt": "ringkasan 1-2 kalimat maksimal 160 karakter", "content": "isi artikel lengkap dalam format Markdown (gunakan heading ##, paragraf, dan list)", "sources": ["URL rujukan jika ada"]}`, strings.Join(database.Categories, ", "))
+{"title": "Judul artikel", "category": "salah satu dari: %s", "excerpt": "ringkasan 1-2 kalimat maksimal 160 karakter", "content": "isi artikel dalam format Markdown (gunakan heading ##, paragraf, dan list), panjang sekitar 500 sampai 700 kata", "sources": ["URL rujukan jika ada"]}`, strings.Join(database.Categories, ", "))
 
 	var userPromptBuilder strings.Builder
 	userPromptBuilder.WriteString(fmt.Sprintf("Topik artikel: %s", topic))
@@ -138,14 +138,11 @@ Format JSON wajib:
 	}
 
 	rawContent := strings.TrimSpace(aiResp.Choices[0].Message.Content)
-	// Strip markdown code fences if model wrapped in ```json ... ```
-	if strings.HasPrefix(rawContent, "```") {
-		lines := strings.Split(rawContent, "\n")
-		if len(lines) >= 2 {
-			rawContent = strings.Join(lines[1:len(lines)-1], "\n")
-		}
+	// Ambil objek JSON di antara kurung kurawal pertama dan terakhir. Ini menangani model
+	// yang membungkus jawaban dengan ```json ... ``` atau menambahkan teks pembuka/penutup.
+	if start, end := strings.Index(rawContent, "{"), strings.LastIndex(rawContent, "}"); start >= 0 && end > start {
+		rawContent = rawContent[start : end+1]
 	}
-	rawContent = strings.TrimSpace(rawContent)
 
 	var post GeneratedPost
 	if err := json.Unmarshal([]byte(rawContent), &post); err != nil {
