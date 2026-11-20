@@ -27,6 +27,7 @@ type openAiRequest struct {
 	Model       string          `json:"model"`
 	Messages    []openAiMessage `json:"messages"`
 	Temperature float64         `json:"temperature"`
+	MaxTokens   int             `json:"max_tokens,omitempty"`
 }
 
 type openAiChoice struct {
@@ -83,7 +84,7 @@ func (c *OpenAiClient) ChatCompletion(topic, category string, searchSnippets []s
 	systemInstruction := fmt.Sprintf(`Kamu adalah penulis blog profesional berbahasa Indonesia.
 Tulis SATU artikel blog lengkap dalam format JSON murni TANPA markdown block, TANPA kata pembuka/penutup.
 Format JSON wajib:
-{"title": "Judul artikel", "category": "salah satu dari: %s", "excerpt": "ringkasan 1-2 kalimat maksimal 160 karakter", "content": "isi artikel dalam format Markdown (gunakan heading ##, paragraf, dan list), panjang sekitar 500 sampai 700 kata", "sources": ["URL rujukan jika ada"]}`, strings.Join(database.Categories, ", "))
+{"title": "Judul artikel", "category": "salah satu dari: %s", "excerpt": "ringkasan 1-2 kalimat maksimal 160 karakter", "content": "isi artikel dalam format Markdown (gunakan heading ##, paragraf, dan list), panjang sekitar 300 sampai 400 kata, ringkas dan padat", "sources": ["URL rujukan jika ada"]}`, strings.Join(database.Categories, ", "))
 
 	var userPromptBuilder strings.Builder
 	userPromptBuilder.WriteString(fmt.Sprintf("Topik artikel: %s", topic))
@@ -106,6 +107,7 @@ Format JSON wajib:
 			{Role: "user", Content: userPromptBuilder.String()},
 		},
 		Temperature: 0.7,
+		MaxTokens:   2000,
 	}
 
 	bodyBytes, _ := json.Marshal(reqPayload)
