@@ -47,38 +47,6 @@ Backend RESTful API untuk aplikasi **Delcom Blog** dengan arsitektur **Feature-F
 8. **100% Test Coverage**:
    - Seluruh package `internal/config`, `internal/database`, `internal/middleware`, `internal/response`, `internal/features/...`, dan `internal/server` diuji dengan target **100.0% Statement Coverage**.
 
----
-
-## ⚙️ Konfigurasi Environment (`.env`)
-
-```env
-APP_PORT=8081
-APP_ENV=development
-APP_KEY=pabwe-secret-key-2026-blog-golang-gin
-
-# Default Admin Credentials
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin
-
-# Database Configuration (Laravel-Style)
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=pabwe_p9_blog
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_SSLMODE=disable
-
-# AI / OpenAI Configuration
-OPENAI_ENDPOINT=https://delcom.org/api/v1
-OPENAI_KEY=key
-OPENAI_MODEL=nama-model
-
-# Search Engine (Wikipedia OpenSearch / DuckDuckGo, tanpa API key)
-SEARCH_ENGINE_ENDPOINT=https://id.wikipedia.org/w/api.php
-```
-
----
 
 ## 🧪 Menjalankan Pengujian (TDD 100% Coverage)
 
@@ -129,6 +97,3 @@ go build -o server.exe main.go
 # Jika di Linux:
 ./server
 ```
-
-> **Catatan Penting:**
-> Pastikan berkas `.env` berada di direktori yang sama dengan berkas `server.exe` saat dijalankan agar konfigurasi basis data dan port aplikasi terbaca dengan benar.
