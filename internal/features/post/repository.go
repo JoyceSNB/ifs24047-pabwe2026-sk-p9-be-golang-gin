@@ -23,7 +23,6 @@ type PostRepository interface {
 
 	// Admin
 	FindAll() ([]database.Post, error)
-	FindUserByID(id uint) (*database.User, error)
 	FindUsersWithStats() ([]UserWithStats, error)
 }
 
@@ -114,14 +113,6 @@ func (r *postRepository) FindAll() ([]database.Post, error) {
 	return posts, err
 }
 
-func (r *postRepository) FindUserByID(id uint) (*database.User, error) {
-	var user database.User
-	if err := r.db.First(&user, id).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
 func (r *postRepository) FindUsersWithStats() ([]UserWithStats, error) {
 	var users []database.User
 	if err := r.db.Order("id asc").Find(&users).Error; err != nil {
@@ -141,6 +132,9 @@ func (r *postRepository) FindUsersWithStats() ([]UserWithStats, error) {
 			CreatedAt:      u.CreatedAt,
 			TotalPosts:     total,
 			TotalPublished: published,
+			TotalArticles:  total,
+			TotalSelesai:   published,
+			BelumSelesai:   total - published,
 		})
 	}
 	return results, nil

@@ -295,6 +295,8 @@ func TestPost_AuthorFlow(t *testing.T) {
 	assert.Equal(t, float64(3), stats["total"])
 	assert.Equal(t, float64(1), stats["total_terbit"])
 	assert.Equal(t, float64(2), stats["belum_selesai"])
+	assert.Equal(t, float64(3), stats["total_articles"])
+	assert.Equal(t, float64(1), stats["total_selesai"])
 
 	// 10. Delete
 	assert.Equal(t, http.StatusForbidden, doReq(h.DeletePost, http.MethodDelete, "/x", nil, other, idParam(idB)).Code)
@@ -386,6 +388,9 @@ func TestPost_AdminEndpoints(t *testing.T) {
 			found = true
 			assert.Equal(t, float64(2), u["total_posts"])
 			assert.Equal(t, float64(1), u["total_published"])
+			assert.Equal(t, float64(2), u["total_articles"])
+			assert.Equal(t, float64(1), u["total_selesai"])
+			assert.Equal(t, float64(1), u["belum_selesai"])
 		}
 	}
 	assert.True(t, found)
@@ -397,7 +402,10 @@ func TestPost_AdminEndpoints(t *testing.T) {
 	wUser := doReq(h.GetUserPosts, http.MethodGet, "/x", nil, 0, idParam(uid))
 	assert.Equal(t, http.StatusOK, wUser.Code)
 	assert.Equal(t, 2, dataLen(t, wUser))
-	assert.Equal(t, http.StatusNotFound, doReq(h.GetUserPosts, http.MethodGet, "/x", nil, 0, idParam(9999)).Code)
+	// Pengguna yang tidak ada mengembalikan daftar kosong (bukan error)
+	wNone := doReq(h.GetUserPosts, http.MethodGet, "/x", nil, 0, idParam(9999))
+	assert.Equal(t, http.StatusOK, wNone.Code)
+	assert.Equal(t, 0, dataLen(t, wNone))
 }
 
 func TestPost_ServiceAndHandlerErrors(t *testing.T) {

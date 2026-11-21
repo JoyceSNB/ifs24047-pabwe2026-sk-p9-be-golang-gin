@@ -20,9 +20,11 @@ type UpdatePostRequest struct {
 }
 
 type PostStatsResponse struct {
-	Total        int64 `json:"total"`
-	TotalTerbit  int64 `json:"total_terbit"`
-	BelumSelesai int64 `json:"belum_selesai"`
+	Total         int64 `json:"total"`
+	TotalTerbit   int64 `json:"total_terbit"`
+	BelumSelesai  int64 `json:"belum_selesai"`
+	TotalArticles int64 `json:"total_articles"`
+	TotalSelesai  int64 `json:"total_selesai"`
 }
 
 type UserWithStats struct {
@@ -33,4 +35,7 @@ type UserWithStats struct {
 	CreatedAt      time.Time `json:"created_at"`
 	TotalPosts     int64     `json:"total_posts"`
 	TotalPublished int64     `json:"total_published"`
+	TotalArticles  int64     `json:"total_articles"`
+	TotalSelesai   int64     `json:"total_selesai"`
+	BelumSelesai   int64     `json:"belum_selesai"`
 }

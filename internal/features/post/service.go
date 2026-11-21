@@ -194,9 +194,11 @@ func (s *postService) GetStats(userID uint) (*PostStatsResponse, error) {
 		return nil, err
 	}
 	return &PostStatsResponse{
-		Total:        total,
-		TotalTerbit:  terbit,
-		BelumSelesai: belumSelesai,
+		Total:         total,
+		TotalTerbit:   terbit,
+		BelumSelesai:  belumSelesai,
+		TotalArticles: total,
+		TotalSelesai:  terbit,
 	}, nil
 }
 
@@ -225,8 +227,6 @@ func (s *postService) GetAllPosts() ([]database.Post, error) {
 }
 
 func (s *postService) GetUserPosts(targetUserID uint) ([]database.Post, error) {
-	if _, err := s.repo.FindUserByID(targetUserID); err != nil {
-		return nil, ErrUserNotFound
-	}
+	// Pengguna yang tidak ada mengembalikan daftar kosong, bukan error.
 	return s.repo.FindByUserID(targetUserID, "", "")
 }
