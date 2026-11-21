@@ -61,7 +61,11 @@ func (h *PostHandler) GetPublicPosts(c *gin.Context) {
 		respondError(c, err)
 		return
 	}
-	response.Success(c, http.StatusOK, "Posts retrieved successfully", posts)
+	items := make([]PublicPostResponse, 0, len(posts))
+	for _, p := range posts {
+		items = append(items, ToPublicPost(p))
+	}
+	response.Success(c, http.StatusOK, "Posts retrieved successfully", items)
 }
 
 func (h *PostHandler) GetPublicPostBySlug(c *gin.Context) {
@@ -70,7 +74,7 @@ func (h *PostHandler) GetPublicPostBySlug(c *gin.Context) {
 		respondError(c, err)
 		return
 	}
-	response.Success(c, http.StatusOK, "Post retrieved successfully", post)
+	response.Success(c, http.StatusOK, "Post retrieved successfully", ToPublicPost(*post))
 }
 
 // ===== Penulis =====

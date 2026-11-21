@@ -352,7 +352,11 @@ func TestPost_PublicEndpoints(t *testing.T) {
 	assert.Equal(t, 6, dataLen(t, wCat))
 
 	// Daftar publik hanya artikel terbit
-	assert.Equal(t, 1, dataLen(t, doReq(h.GetPublicPosts, http.MethodGet, "/api/public/posts", nil, 0)))
+	wList := doReq(h.GetPublicPosts, http.MethodGet, "/api/public/posts", nil, 0)
+	assert.Equal(t, 1, dataLen(t, wList))
+	assert.NotContains(t, wList.Body.String(), "user_id")
+	assert.NotContains(t, wList.Body.String(), "password")
+	assert.Contains(t, wList.Body.String(), `"author_name":"author"`)
 	assert.Equal(t, 1, dataLen(t, doReq(h.GetPublicPosts, http.MethodGet, "/api/public/posts?q=gin", nil, 0)))
 	assert.Equal(t, 1, dataLen(t, doReq(h.GetPublicPosts, http.MethodGet, "/api/public/posts?category=Teknologi", nil, 0)))
 	assert.Equal(t, 0, dataLen(t, doReq(h.GetPublicPosts, http.MethodGet, "/api/public/posts?category=Umum", nil, 0)))
@@ -363,6 +367,8 @@ func TestPost_PublicEndpoints(t *testing.T) {
 	d := dataObj(t, wSlug)
 	assert.Equal(t, "Artikel Terbit Gin", d["title"])
 	assert.Equal(t, "author", d["user"].(map[string]any)["username"])
+	assert.Equal(t, "author", d["author_name"])
+	assert.NotContains(t, wSlug.Body.String(), "user_id")
 
 	// Draf dan slug tidak dikenal -> 404
 	wDraft := doReq(h.GetPublicPostBySlug, http.MethodGet, "/x", nil, 0, gin.Param{Key: "slug", Value: "artikel-draf"})
@@ -459,4 +465,11 @@ func TestPost_RepositoryErrors(t *testing.T) {
 	assert.NoError(t, env.db.Migrator().DropTable(&database.User{}))
 	_, err = env.repo.FindUsersWithStats()
 	assert.Error(t, err)
+}
+
+func TestPost_ToPublicPostWithoutUser(t *testing.T) {
+	res := ToPublicPost(database.Post{Title: "Tanpa Penulis", Content: "isi"})
+	assert.Equal(t, "Tanpa Penulis", res.Title)
+	assert.Equal(t, "", res.AuthorName)
+	assert.Equal(t, "", res.User.Username)
 }
